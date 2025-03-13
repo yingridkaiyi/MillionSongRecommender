@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Million Song Recommender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input, .input-group select {
+            padding: 8px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .song-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .song-features {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+    <script>
+        async function getRecommendations() {
+            const userInput = document.getElementById('userInput').value;
+            const topN = document.getElementById('topN').value || 10;
+            const genre = document.getElementById('genre').value;
+
+            const response = await fetch('/recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    input: userInput, 
+                    top_n: parseInt(topN),
+                    genre: genre || null
+                }),
+            });
+            const recommendations = await response.json();
+            displayRecommendations(recommendations);
+        }
+
+        function displayRecommendations(recommendations) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            recommendations.forEach(song => {
+                const songCard = document.createElement('div');
+                songCard.className = 'song-card';
+                
+                const title = document.createElement('h3');
+                title.textContent = `${song.track_name} by ${song.artist_name}`;
+                
+                const features = document.createElement('div');
+                features.className = 'song-features';
+                features.innerHTML = `
+                    Danceability: ${song.danceability.toFixed(2)} | 
+                    Energy: ${song.energy.toFixed(2)} | 
+                    Valence: ${song.valence.toFixed(2)} | 
+                    Tempo: ${song.tempo.toFixed(0)} BPM |
+                    Acousticness: ${song.acousticness.toFixed(2)} |
+                    Instrumentalness: ${song.instrumentalness.toFixed(2)}
+                `;
+                
+                songCard.appendChild(title);
+                songCard.appendChild(features);
+                resultsDiv.appendChild(songCard);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Million Song Recommender</h1>
+    
+    <div class="input-group">
+        <label for="userInput">Describe your mood or activity:</label>
+        <input type="text" id="userInput" placeholder="e.g., Working out with friends in the evening">
+    </div>
+    
+    <div class="input-group">
+        <label for="genre">Select Genre (optional):</label>
+        <select id="genre">
+            <option value="">Any Genre</option>
+            {% for genre in genres %}
+            <option value="{{ genre }}">{{ genre.replace('_', ' ').title() }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="input-group">
+        <label for="topN">Number of recommendations:</label>
+        <input type="number" id="topN" placeholder="10" min="1" max="50">
+    </div>
+    
+    <button onclick="getRecommendations()">Get Recommendations</button>
+    
+    <div id="results"></div>
+</body>
+</html>
